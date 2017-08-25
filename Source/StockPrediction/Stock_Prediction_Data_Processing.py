@@ -92,30 +92,30 @@ def simple_means(value):
     elif value < 10:     return 5
     else:                return 6
 
-def simple_claasification(df, n_cluster=5):
+def simple_claasification(df, n_clCHNter=5):
     len_total = len(df)
     df.dropna(inplace=True)
     labels = [simple_means(df[i]) for i in range(len(df))]
     
     # check how many for each class
-    counters = np.repeat(0, n_cluster)
-    for i in labels:
+    counters = np.repeat(0, n_clCHNter)
+    for i in range(counters.size):
         counters[i] += 1
 
     out_labels = np.append(labels, np.repeat(np.nan, len_total - len(df)))
     return out_labels, counters, None
 
 
-def kmeans_claasification(df, n_cluster=5):
+def kmeans_claasification(df, n_clCHNter=5):
     '''
-    Use KMeans algorithm to get the classification output
+    CHNe KMeans algorithm to get the classification output
     '''
     len_total = len(df)
     df.dropna(inplace=True)
     X = np.array(df)
     X = X.reshape(-1, 1)
         
-    kmeans = KMeans(n_clusters=n_cluster, random_state=0).fit(X)
+    kmeans = KMeans(n_clusters=n_clCHNter, random_state=0).fit(X)
 
     # resort KMeans label
     centers_ori = np.reshape(kmeans.cluster_centers_,(1, -1))  # [[ 0.16464226  2.03577568 -0.55692057  0.89430484 -1.52722935]]
@@ -129,7 +129,7 @@ def kmeans_claasification(df, n_cluster=5):
     labels = [centers_new[labels[i]] for i in range(len(labels))]
 
     # check how many for each class
-    counters = np.repeat(0, n_cluster)
+    counters = np.repeat(0, n_clCHNter)
     for i in labels:
         counters[i] += 1
 
@@ -165,13 +165,13 @@ def get_single_stock_data(root_path, symbol):
     #     skipinitialspace=True,
     #     engine='python',
     #     index_col=['Date'],
-    #     #usecols=COLUMNS,
+    #     #CHNecols=COLUMNS,
     #     parse_dates=['Date'],
     #     #skiprows=1,
     #     memory_map=True,
     #     #chunksize=300,
     # ).sort_index()
-    df, lastUpdateTime = queryStock(root_path, "DB_STOCK", "SHEET_US_DAILY", symbol)
+    df, lastUpdateTime = queryStock(root_path, "DB_STOCK", "SHEET_CHN_DAILY", symbol)
     df.index = pd.to_datetime(df.index)
 
     if df.empty: 
@@ -213,7 +213,7 @@ def group_by_features(features, df):
     for key, group in features.items():
         df_feature_col = []
         for i in group:
-            df_feature_col.extend([col for col in df.columns if i in col])
+            df_feature_col.extend([col for col in df.columns if i == col])
         for feature in df_feature_col:
             data_group_columns.append(feature)
         data_group_features[key] = df[df_feature_col]
@@ -308,6 +308,8 @@ def get_single_stock_feature_data(paras, input_data, LabelColumnName):
     input_data = input_data.loc[(input_data.index >= start_date) & (input_data.index <= end_date)]
     input_data = input_data[input_data['volume'] > 0]
 
+    dataset = input_data
+    dataset["adj_close"] = dataset['close']
     # dataset = StockDataFrame.retype(input_data)
     # dataset = input_data.rename(columns = {'Date':'date', 'Open':'open', 'High':'high', 'Low':'low', 'Close':'close', "Adj Close":'adj_close', 'Volume':'volume'})
 

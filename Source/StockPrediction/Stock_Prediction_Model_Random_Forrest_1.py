@@ -55,7 +55,7 @@ class random_forrest_regression(random_forrest_model):
     def prepare_train_test_data(self, data_feature, LabelColumnName):
         firstloop = 1
         for ticker, data in data_feature.items():
-            df = data[0][['hl_perc', 'co_perc']]
+            df = data[0][self.paras.features['0_0']]
             X = np.array(df)
             X = preprocessing.scale(X)
             y = np.array(data[0]["price_next_month"])
@@ -112,10 +112,11 @@ class random_forrest_regression(random_forrest_model):
 
     def predict(self, model, X, y):
         conf = model.score(X, y)
-        print('Confidence: ', conf)
+        # print('Confidence: ', conf)
 
         predictions = model.predict(X)
-        print(predictions)
+        if predictions.size == self.paras.pred_len:
+            print(predictions)
         # if np.isfinite(y).all():
         #     print('Accuracy: ', accuracy_score(y, np.argmax(predictions, axis=1)))
         return predictions
@@ -141,24 +142,26 @@ class random_forrest_regression(random_forrest_model):
             X_lately, y_lately = preprocessing_data(self.paras, data[2], LabelColumnName, one_hot_label_proc=False)
 
             possibility_columns = [str(self.paras.window_len[index]) + '_' + str(idx) for idx in range(self.paras.n_out_class)]
+            # 奇怪的是 n_out_class 只有 0_0 这是怎么回事呢？？？？？
+            possibility_columns = possibility_columns[:1]
 
             print('\n ---------- ', ticker, ' ---------- \n')
-            print(' ############## validation on train data ############## ')
+            # print(' ############## validation on train data ############## ')
             predictions_train = self.predict(model, X_train, y_train)
             data[3].loc[data[0].index, 'label'] = y_train#np.argmax(y, axis=1) #- int(self.paras.n_out_class/2)
-            data[3].loc[data[0].index, 'pred'] = np.argmax(predictions_train, axis=1) #- int(self.paras.n_out_class/2)
+            data[3].loc[data[0].index, 'pred'] = predictions_train # np.argmax(predictions_train, axis=len(predictions_train.shape)-1) #- int(self.paras.n_out_class/2)
             s = pd.DataFrame(predictions_train, index = data[0].index, columns=possibility_columns)
 
-            print(' ############## validation on valid data ############## ')
+            # print(' ############## validation on valid data ############## ')
             predictions_valid = self.predict(model, X_valid, y_valid)
             data[3].loc[data[1].index, 'label'] = y_valid#np.argmax(y_valid, axis=1) #- int(self.paras.n_out_class/2)
-            data[3].loc[data[1].index, 'pred'] = np.argmax(predictions_valid, axis=1) #- int(self.paras.n_out_class/2)
+            data[3].loc[data[1].index, 'pred'] = predictions_valid #np.argmax(predictions_valid, axis=len(predictions_train.shape)-1) #- int(self.paras.n_out_class/2)
             s = s.append(pd.DataFrame(predictions_valid, index = data[1].index, columns=possibility_columns))
 
-            print(' ############## validation on lately data ############## ')
+            # print(' ############## validation on lately data ############## ')
             predictions_lately = self.predict(model, X_lately, y_lately)
             data[3].loc[data[2].index, 'label'] = np.nan#np.argmax(actual_lately, axis=1)
-            data[3].loc[data[2].index, 'pred'] = np.argmax(predictions_lately, axis=1) #- int(self.paras.n_out_class/2)
+            data[3].loc[data[2].index, 'pred'] = np.argmax(predictions_lately, axis=len(predictions_train.shape)-1) #- int(self.paras.n_out_class/2)
             s = s.append(pd.DataFrame(predictions_lately, index = data[2].index, columns=possibility_columns))
             
             data[3] = pd.merge(data[3], s, how='outer', left_index=True, right_index=True)
@@ -176,10 +179,10 @@ class random_forrest_regression(random_forrest_model):
                 valid_actual_count.append(len(data[4][data[4]['label'] == i]))
                 valid_predict_count.append(len(data[4][(data[4]['label'] == i) & (data[4]['label'] == data[4]['pred'])]))
 
-            print('\nclassification counter:\n', actual_count)
-            print('\nclassification possibility:\n', 100*np.array(actual_count)/np.sum(actual_count))
-            print('\nclassification train predict:\n', 100*np.array(predict_count)/np.array(actual_count))
-            print('\nclassification valid predict:\n', 100*np.array(valid_predict_count)/np.array(valid_actual_count))
+            # print('\nclassification counter:\n', actual_count)
+            # print('\nclassification possibility:\n', 100*np.array(actual_count)/np.sum(actual_count))
+            # print('\nclassification train predict:\n', 100*np.array(predict_count)/np.array(actual_count))
+            # print('\nclassification valid predict:\n', 100*np.array(valid_predict_count)/np.array(valid_actual_count))
 
             timePeriod = [22*24, 22*12, 22*6, 22*3, 22*2, 22]
             pred_profit = data[3]["pred_profit"]
@@ -194,18 +197,19 @@ class random_forrest_regression(random_forrest_model):
             
             df_ori = pd.DataFrame(centers_oris, index=index_oris)
             df_ori.index.name = 'Days'
-            print('\nclassification centers:\n', df_ori)
+            # print('\nclassification centers:\n', df_ori)
             
             # rewrite data frame and save / update
             data[3] = self.save_data_frame_mse(ticker, data[3], self.paras.window_len[index], possibility_columns)
             self.df = data[3]
 
             pd.set_option('display.max_rows', None)
-            print('\n -------------------- \n')
-            data[3]['label'] = data[3]['label'] - int(self.paras.n_out_class/2)
-            data[3]['pred'] = data[3]['pred'] - int(self.paras.n_out_class/2)
-            print(data[3][-(self.paras.pred_len + self.paras.valid_len):])
-            
+            # print('\n -------------------- \n')
+            # data[3]['label'] = data[3]['label'] - int(self.paras.n_out_class/2)
+            # data[3]['pred'] = data[3]['pred'] - int(self.paras.n_out_class/2)
+            # print(data[3][-(self.paras.pred_len + self.paras.valid_len):])
+            print(data[3][-self.paras.pred_len:])
+
 
 
     ###################################

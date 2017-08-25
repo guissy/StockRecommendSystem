@@ -89,6 +89,8 @@ def queryStockList(root_path, database, sheet):
     
     try:
         if storeType == 1:
+            import subprocess
+            subprocess.Popen('brew services restart mongodb'.split())
             collection = getCollection(database, CollectionKey)
             df = readFromCollection(collection)
             if df.empty == False: df = setStockList(df)
@@ -206,6 +208,7 @@ def queryStock(root_path, database, sheet, symbol):
     config = getConfig(root_path)
     storeType = int(config.get('Setting', 'StoreType'))
     stockList = getStockList(root_path, database, sheet)
+    stockList.loc[symbol].get('stock_update')
     lastUpdateTime = pd.Timestamp(stockList.loc[symbol]['stock_update'])
 
     try:
@@ -240,7 +243,7 @@ def storeStock(root_path, database, sheet, symbol, df):
     stockList = getStockList(root_path, database, sheet)
     if stockList[stockList.index == symbol]['stock_update'][0] != now_date:
         stockList.set_value(symbol, 'stock_update', now_date)
-        storeStockList(root_path, database, "SHEET_US_DAILY", stockList, symbol)
+        storeStockList(root_path, database, "SHEET_CNH_DAILY", stockList, symbol)
 
     
     #     df.set_index('date')  
@@ -264,7 +267,7 @@ def storeStock(root_path, database, sheet, symbol, df):
 def queryNews(root_path, database, sheet, symbol):
     config = getConfig(root_path)
     storeType = int(config.get('Setting', 'StoreType'))
-    lastUpdateTime = pd.Timestamp(getStockList(root_path, database, 'SHEET_US_DAILY').loc[symbol]['news_update'])
+    lastUpdateTime = pd.Timestamp(getStockList(root_path, database, 'SHEET_CNH_DAILY').loc[symbol]['news_update'])
 
     try:
         if storeType == 1:
@@ -295,9 +298,9 @@ def storeNews(root_path, database, sheet, symbol, df):
     now_date = datetime.datetime.now().strftime("%Y-%m-%d")
     
     now_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    stockList = getStockList(root_path, database, 'SHEET_US_DAILY')
+    stockList = getStockList(root_path, database, 'SHEET_CNH_DAILY')
     stockList.set_value(symbol, 'news_update', now_date)
-    storeStockList(root_path, database, "SHEET_US_DAILY", stockList.reset_index())
+    storeStockList(root_path, database, "SHEET_CNH_DAILY", stockList.reset_index())
 
     df = df.drop_duplicates(subset=['uri'], keep='first')
     #df.set_index(['date'], inplace=True)

@@ -33,7 +33,7 @@ def get_data(symbols, dates_range, update):
     
     df = df[df.index.isin(dates_range)].fillna(0).sort_index()
 
-    #print("NaN Columns:", df[df.isnull().any(axis=1)])
+    # print("NaN Columns:", df[df.isnull().any(axis=1)])
     return df
 
 class Simulator(object):

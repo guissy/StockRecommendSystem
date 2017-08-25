@@ -114,7 +114,7 @@ class random_forrest_model(base_model):
 class random_forrest_classification(random_forrest_model):
     def __init__(self, paras):
         super(random_forrest_classification, self).__init__(paras=paras)
-
+        self.accuracy = []
 
     ###################################
     ###                             ###
@@ -178,7 +178,8 @@ class random_forrest_classification(random_forrest_model):
     def predict(self, model, X, y):
         predictions = model.predict_proba(X)
         if np.isfinite(y).all():
-            print('Accuracy: ', accuracy_score(y, np.argmax(predictions, axis=1)))
+            self.accuracy.append(accuracy_score(y, np.argmax(predictions, axis=1)))
+            # print('Accuracy: ', accuracy_score(y, np.argmax(predictions, axis=1)))
         return predictions
 
 
@@ -189,7 +190,7 @@ class random_forrest_classification(random_forrest_model):
         if model == None:
             print('predict failed, model not exist')
             return
-
+        self.df_sum = pd.DataFrame()
         for ticker in self.paras.predict_tickers:
             try:
                 data = data_feature[ticker]
@@ -203,25 +204,25 @@ class random_forrest_classification(random_forrest_model):
 
             possibility_columns = [str(self.paras.window_len[index]) + '_' + str(idx) for idx in range(self.paras.n_out_class)]
 
-            print('\n ---------- ', ticker, ' ---------- \n')
-            print(' ############## validation on train data ############## ')
+            # print('\n ---------- ', ticker, ' ---------- \n')
+            # print(' ############## validation on train data ############## ')
             predictions_train = self.predict(model, X_train, y_train)
             data[3].loc[data[0].index, 'label'] = y_train#np.argmax(y, axis=1) #- int(self.paras.n_out_class/2)
             data[3].loc[data[0].index, 'pred'] = np.argmax(predictions_train, axis=1) #- int(self.paras.n_out_class/2)
             s = pd.DataFrame(predictions_train, index = data[0].index, columns=possibility_columns)
 
-            print(' ############## validation on valid data ############## ')
+            # print(' ############## validation on valid data ############## ')
             predictions_valid = self.predict(model, X_valid, y_valid)
             data[3].loc[data[1].index, 'label'] = y_valid#np.argmax(y_valid, axis=1) #- int(self.paras.n_out_class/2)
             data[3].loc[data[1].index, 'pred'] = np.argmax(predictions_valid, axis=1) #- int(self.paras.n_out_class/2)
             s = s.append(pd.DataFrame(predictions_valid, index = data[1].index, columns=possibility_columns))
 
-            print(' ############## validation on lately data ############## ')
+            # print(' ############## validation on lately data ############## ')
             predictions_lately = self.predict(model, X_lately, y_lately)
             data[3].loc[data[2].index, 'label'] = np.nan#np.argmax(actual_lately, axis=1)
             data[3].loc[data[2].index, 'pred'] = np.argmax(predictions_lately, axis=1) #- int(self.paras.n_out_class/2)
             s = s.append(pd.DataFrame(predictions_lately, index = data[2].index, columns=possibility_columns))
-            
+
             data[3] = pd.merge(data[3], s, how='outer', left_index=True, right_index=True)
 
             actual_count = []
@@ -237,10 +238,10 @@ class random_forrest_classification(random_forrest_model):
                 valid_actual_count.append(len(data[4][data[4]['label'] == i]))
                 valid_predict_count.append(len(data[4][(data[4]['label'] == i) & (data[4]['label'] == data[4]['pred'])]))
 
-            print('\nclassification counter:\n', actual_count)
-            print('\nclassification possibility:\n', 100*np.array(actual_count)/np.sum(actual_count))
-            print('\nclassification train predict:\n', 100*np.array(predict_count)/np.array(actual_count))
-            print('\nclassification valid predict:\n', 100*np.array(valid_predict_count)/np.array(valid_actual_count))
+            # print('\nclassification counter:\n', actual_count)
+            # print('\nclassification possibility:\n', 100*np.array(actual_count)/np.sum(actual_count))
+            # print('\nclassification train predict:\n', 100*np.array(predict_count)/np.array(actual_count))
+            # print('\nclassification valid predict:\n', 100*np.array(valid_predict_count)/np.array(valid_actual_count))
 
             timePeriod = [22*24, 22*12, 22*6, 22*3, 22*2, 22]
             pred_profit = data[3]["pred_profit"]
@@ -252,21 +253,29 @@ class random_forrest_classification(random_forrest_model):
                 out_labels, counters, centers_ori = kmeans_claasification(pred_profit[pred_profit_len - time : pred_profit_len], self.paras.n_out_class)
                 centers_oris.append(np.sort(centers_ori))
                 index_oris.append(time)
-            
+
             df_ori = pd.DataFrame(centers_oris, index=index_oris)
             df_ori.index.name = 'Days'
-            print('\nclassification centers:\n', df_ori)
-            
+            # print('\nclassification centers:\n', df_ori)
+
             # rewrite data frame and save / update
             data[3] = self.save_data_frame_mse(ticker, data[3], self.paras.window_len[index], possibility_columns)
             self.df = data[3]
 
             pd.set_option('display.max_rows', None)
-            print('\n -------------------- \n')
+            # print('\n -------------------- \n')
             data[3]['label'] = data[3]['label'] - int(self.paras.n_out_class/2)
             data[3]['pred'] = data[3]['pred'] - int(self.paras.n_out_class/2)
-            print(data[3][-(self.paras.pred_len + self.paras.valid_len):])
-            
+            # print(data[3][-(self.paras.pred_len + self.paras.valid_len):])
+            data[3]['ticker'] = ticker
+            data[3]['accuracy'] = self.accuracy[-2]
+            df = data[3].loc[[pd.Timestamp(max(data[3].index))], ['ticker', 'accuracy', 'close', '0_2', '0_3']]
+            self.df_sum = self.df_sum.append(df)
+        print(self.df_sum)
+        d = self.df_sum.index[-1].strftime('%Y-%m-%d')
+        self.df_sum.to_html('../../output/'+d+'.html')
+        self.df_sum.to_csv('../../output/'+d+'.csv')
+
 
 
     ###################################
@@ -326,4 +335,3 @@ class random_forrest_classification(random_forrest_model):
             if train: model = self.train_data(data_feature, LabelColumnName, index)
             
             if predict: self.predict_data(model, data_feature, LabelColumnName, index)
-

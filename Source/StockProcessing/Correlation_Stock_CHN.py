@@ -15,7 +15,7 @@ from DB_API import queryStockList, queryStock, queryCorrelation, storeCorrelatio
 
 def get_single_stock_data(root_path, symbol, dates_range):
     
-    df, lastUpdateTime = queryStock(root_path, "DB_STOCK", "SHEET_US_DAILY", symbol)
+    df, lastUpdateTime = queryStock(root_path, "DB_STOCK", "SHEET_CHN_DAILY", symbol)
     if df.empty: return pd.DataFrame()
     
     df.index = pd.to_datetime(df.index)
@@ -27,11 +27,11 @@ def get_single_stock_data(root_path, symbol, dates_range):
     
 
 def get_all_stocks_correlation(root_path, dates_range):
-    df = queryCorrelation(root_path, "DB_STOCK", "SHEET_US_RELA")
+    df = queryCorrelation(root_path, "DB_STOCK", "SHEET_CHN_RELA")
 
     if df.empty == False: return df
     
-    df = queryStockList(root_path, "DB_STOCK", "SHEET_US_DAILY")
+    df = queryStockList(root_path, "DB_STOCK", "SHEET_CHN_DAILY")
     symbols = df.index.values.tolist()
 
     pbar = tqdm(total=len(symbols))
@@ -73,19 +73,19 @@ def get_all_stocks_correlation(root_path, dates_range):
             pbar.update(1)
 
     print("arrange matrix...")
-    us_company_pairs = combinations(stockList, 2)
-    df_us_company_pairs = pd.DataFrame(list(us_company_pairs))
-    df_us_company_pairs.columns = ['company1', 'company2']
-    df_us_company_pairs.loc[:, 'correlation'] = pd.Series(pairwise_correlations).T
-    df_us_company_pairs = df_us_company_pairs.sort_values(['correlation'], ascending=[False]).reset_index(drop=True)
+    CHN_company_pairs = combinations(stockList, 2)
+    df_CHN_company_pairs = pd.DataFrame(list(CHN_company_pairs))
+    df_CHN_company_pairs.columns = ['company1', 'company2']
+    df_CHN_company_pairs.loc[:, 'correlation'] = pd.Series(pairwise_correlations).T
+    df_CHN_company_pairs = df_CHN_company_pairs.sort_values(['correlation'], ascending=[False]).reset_index(drop=True)
 
-    storeCorrelation(root_path, "DB_STOCK", "SHEET_US_RELA", df_us_company_pairs)
+    storeCorrelation(root_path, "DB_STOCK", "SHEET_CHN_RELA", df_CHN_company_pairs)
 
     print('total processing in:  %.4s seconds' % ((time.time() - startTime)))
 
     pbar.close()
 
-    return df_us_company_pairs
+    return df_CHN_company_pairs
 
 
 if __name__ == "__main__":
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     
     df = get_all_stocks_correlation(root_path, pd.date_range(start_date, end_date))
 
-    df_amd = df[df['company1'] == 'AMD'].reset_index(drop=True)
+    df_amd = df[df['company1'] == '000001'].reset_index(drop=True)
     print(df_amd.head(30))
 
     # if storeType == 1:

@@ -1,4 +1,4 @@
-import sys, os, time, datetime, requests, warnings, configparser
+import sys, os, time, datetime, warnings, configparser
 import pandas as pd
 import numpy as np
 import tushare as ts
@@ -10,7 +10,7 @@ for _ in range(2):
     root_path = cur_path[0:cur_path.rfind('/', 0, len(cur_path))]
     cur_path = root_path
 sys.path.append(root_path + "/" + 'Source/DataBase/')
-from DB_API import queryStock, storeStock, queryStockList, storeStockList, queryStockPublishDay, storePublishDay
+from Source.DataBase.DB_API import queryStock, storeStock, queryStockList, storeStockList, queryStockPublishDay, storePublishDay
 
 def getStocksList(root_path):
     try:
@@ -20,7 +20,8 @@ def getStocksList(root_path):
         df = pd.DataFrame()
 
     if df.empty == False: return df
-    
+    import subprocess
+    subprocess.Popen('brew services restart mongodb'.split())
     stock_info = ts.get_stock_basics()
     listData = pd.DataFrame(stock_info)
     #listData.index.name = 'symbol'

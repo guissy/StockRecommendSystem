@@ -16,7 +16,7 @@ for _ in range(2):
     cur_path = root_path
 sys.path.append(root_path + "/" + 'Source/FetchData/')
 sys.path.append(root_path + "/" + 'Source/DataBase/')
-from Fetch_Data_Stock_US_Daily import updateStockData_US, getStocksList
+from Fetch_Data_Stock_CHN_Daily import updateStockData_CHN, getStocksList
 
 
 def run_lstm_classification(root_path, train_symbols, predict_symbols, need_training, need_plot_training_diagram, need_predict):
@@ -25,9 +25,9 @@ def run_lstm_classification(root_path, train_symbols, predict_symbols, need_trai
     paras.load = False
     paras.plot = need_plot_training_diagram
     # 0_index: no norm   1_index: standard norm   2_index: minmax norm   3_index: zscore norm
-    paras.features = {'0_0':['frac_change', 'frac_high', 'frac_low'], 
+    paras.features = {'0_0':['frac_change', 'frac_high', 'frac_low'],
                       '3_0':['c_2_o', 'h_2_o', 'l_2_o', 'c_2_h', 'h_2_l', 'vol'],
-                      '3_0':['volume']} 
+                      '3_0':['volume']}
     #paras.features = [['top', 'middle', 'bottom'], ['volume'], ['vol_stat'], ['close_-5_r', 'close_-10_r', 'close_-20_r', 'close_-60_r']]
     #paras.window_len = [2, 4, 9]
     paras.window_len = [44]
@@ -36,7 +36,7 @@ def run_lstm_classification(root_path, train_symbols, predict_symbols, need_trai
     paras.start_date = '2012-01-03'
     paras.end_date = datetime.datetime.now().strftime("%Y-%m-%d")
     paras.verbose = 1
-    
+
     paras.batch_size = 64
     paras.epoch = 100
     #paras.model['hidden_layers'] = [[256, 128, 64], [256, 128, 64], [256, 128, 64]]
@@ -66,8 +66,8 @@ def run_dbn_classification(root_path, train_symbols, predict_symbols, need_train
     paras.load = False
     paras.plot = need_plot_training_diagram
     # 0_index: no norm   1_index: standard norm   2_index: minmax norm   3_index: zscore norm
-    paras.features = {'0_0':['frac_change', 'frac_high', 'frac_low'], 
-                      '3_0':['volume']} 
+    paras.features = {'0_0':['frac_change', 'frac_high', 'frac_low'],
+                      '3_0':['volume']}
     #paras.window_len = [2, 4, 9]
     paras.window_len = [2]
     paras.pred_len = 1
@@ -105,13 +105,13 @@ def run_rf_classification(root_path, train_symbols, predict_symbols, need_traini
     paras.load = False
     paras.plot = need_plot_training_diagram
     # 0_index: no norm   1_index: standard norm   2_index: minmax norm   3_index: zscore norm
-    paras.features = {#'0_0':['frac_change', 'frac_high', 'frac_low'], 
-                      #'0_0':['rsi_7', 'rsi_14', 'rsi_21', 'kdjk_9', 'kdjk_14', 'wr_9', 
+    paras.features = {#'0_0':['frac_change', 'frac_high', 'frac_low'],
+                      #'0_0':['rsi_7', 'rsi_14', 'rsi_21', 'kdjk_9', 'kdjk_14', 'wr_9',
                       #       'wr_14', 'close_-5_r', 'close_-10_r', 'close_-20_r']
                       '0_0':['c_2_o', 'h_2_o', 'l_2_o', 'c_2_h', 'h_2_l', 'vol']
                       #'3_0':['volume']
-                     } 
-                      
+                     }
+
     #paras.window_len = [5, 10, 20]
     paras.window_len = [0]
     paras.pred_len = 1
@@ -148,18 +148,18 @@ def run_rf_regression(root_path, train_symbols, predict_symbols, need_training, 
     paras.load = False
     paras.plot = need_plot_training_diagram
     # 0_index: no norm   1_index: standard norm   2_index: minmax norm   3_index: zscore norm
-    paras.features = {#'0_0':['frac_change', 'frac_high', 'frac_low'], 
-                      #'0_0':['rsi_7', 'rsi_14', 'rsi_21', 'kdjk_9', 'kdjk_14', 'wr_9', 
+    paras.features = {#'0_0':['frac_change', 'frac_high', 'frac_low'],
+                      #'0_0':['rsi_7', 'rsi_14', 'rsi_21', 'kdjk_9', 'kdjk_14', 'wr_9',
                       #       'wr_14', 'close_-5_r', 'close_-10_r', 'close_-20_r']
-                      '0_0':['c_2_o', 'h_2_o', 'l_2_o', 'c_2_h', 'h_2_l', 'vol']
+                      '0_0':['c_2_o', 'h_2_o', 'l_2_o', 'c_2_h', 'h_2_l', 'vol','frac_change', 'frac_high', 'frac_low']
                       #'3_0':['volume']
-                     } 
-                      
+                     }
+
     #paras.window_len = [5, 10, 20]
     paras.window_len = [0]
     paras.pred_len = 1
     paras.valid_len = 20
-    paras.start_date = '2016-01-03'
+    paras.start_date = '2015-01-05'
     paras.end_date = datetime.datetime.now().strftime("%Y-%m-%d")
     paras.verbose = 0
 
@@ -178,7 +178,7 @@ def run_rf_regression(root_path, train_symbols, predict_symbols, need_training, 
     paras.window_max = 44
 
     paras.out_class_type = 'regression'
-    paras.n_out_class = 7  # ignore for regression
+    paras.n_out_class = 9  # ignore for regression
 
     # run
     rf_cla = random_forrest_regression(paras)
@@ -199,7 +199,7 @@ def run_recommand_system(root_path, train_symbols, predict_symbols, need_trainin
     paras.epoch = 200
 
     paras.out_class_type = 'classification'
-    paras.n_out_class = 2  # ignore for regression
+    paras.n_out_class = 7  # ignore for regression
 
     # run
     rs = recommand_system(paras)
@@ -209,8 +209,7 @@ if __name__ == "__main__":
     warnings.filterwarnings('ignore', category=pd.io.pytables.PerformanceWarning)
     tf.logging.set_verbosity(tf.logging.ERROR)
 
-    predict_symbols = ['AMD', 'WDC', 'SINA', 'WB', 'CTRP', 'NTES', 'ATVI', 'FB', 'GLUU', 'NVDA', 'NFLX', 
-                       'MRVL', 'SMCI', 'JD', 'INTC', 'AMZN', 'BIDU', 'BGNE', 'QIWI', 'MOMO', 'YY']
+    predict_symbols = ['600570', '002460', '600362','000060', '000558','000561','002167','000983']
 
     now = datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -225,16 +224,16 @@ if __name__ == "__main__":
         
         # wait for db start, the standard procedure should listen to 
         # the completed event of function "StartServer"
-        time.sleep(5)
+        # time.sleep(5)
 
-    #updateStockData_US(root_path, "1990-01-01", now, storeType)
+    # Fetch_Data_Stock_CHN_Daily(root_path, "1990-01-01", now, storeType)
 
     #paras = run_lstm_classification(root_path, predict_symbols, predict_symbols, True, False, True)
     #paras = run_dbn_classification(root_path, predict_symbols, predict_symbols, True, False, True)
-    #paras = run_rf_classification(root_path, predict_symbols, predict_symbols, True, False, True)
+    paras = run_rf_classification(root_path, predict_symbols, predict_symbols, True, False, True)
 
     #run_recommand_system(root_path, predict_symbols, predict_symbols, True, False, True)
-    paras = run_rf_regression(root_path, predict_symbols, predict_symbols, True, False, True)
+    # paras = run_rf_regression(root_path, predict_symbols, predict_symbols, True, False, True)
     
     if storeType == 1:
         # stop database server (sync)
